@@ -1,3 +1,21 @@
+> **You are on `cuda-kernels`.** Research fork of the upstream `MVSFormerPlusPlus` repository (base `bdd980c`, 2026-10; `main` mirrors upstream). `cuda-kernels` = upstream plus custom CUDA kernels and fast paths (fused cost-volume kernels (mvsf_kernels, prebuilt .so tied to the torch build, JIT-compiles if missing)). Prebuilt binaries are tied to the torch/CUDA build they were made with; the vendored fastbb cudnn-frontend paths need `pip install nvidia-cudnn-frontend`.
+>
+> Licence, as upstream (see LICENSE)
+
+RTX 5060 Ti 16 GB, torch cu130, 2026-10-23. Median of N runs after warm-up, fixed seeds. Speed-up columns: vs upstream + flags / vs upstream. Peak memory = torch peak allocated / reserved.
+
+Flags in the 'upstream + flags' row (no source change): cudnn.benchmark, TF32 (bf16 autocast kept).
+
+| version | 1536x1024 ms | 768x512 ms | speed-up at A (vs flags / vs upstream) | speed-up at B | peak MB at A (alloc / reserved) | startup / first call / new size | accuracy |
+|---|---|---|---|---|---|---|---|
+| upstream (bf16 autocast) | 495.6 | 108.3 | 1.00x | 1.00x | 2880 / 3270 | 3.7 s / 1240 ms / 127 ms | not measured (random weights) |
+| upstream + flags (cudnn.benchmark, TF32; bf16 autocast kept) | 463.6 | 100.9 | 1.00x / 1.07x | 1.00x / 1.07x | 9320 / 9760 | first call 6.5 s / new size 1678 ms | not measured (random weights) |
+| **cuda-kernels** | 273.7 | 59.2 | 1.69x / 1.81x | 1.70x / 1.83x | 2540 / 4060 | first call 821 ms / new size 67 ms | not measured (random weights) |
+
+The pretrained MVSFormer++ checkpoint was not available; weights are DINOv2-B pretrained plus seeded random init, so speed is valid but ACCURACY WAS NOT MEASURED. Known issue: the kernel path crashed (illegal memory access, entropy/visibility stage) on one ETH3D scene (pipes, ref 12) with random weights; it reproduces on the research branch and was not root-caused. fp16 autocast flags variant: 445.1 / 97.7 ms (unverifiable).
+
+---
+
 ## MVSFormer++: Revealing the Devil in Transformer’s Details for Multi-View Stereo (ICLR2024)
 
 [![PWC](https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/mvsformer-revealing-the-devil-in-transformer/3d-reconstruction-on-dtu)](https://paperswithcode.com/sota/3d-reconstruction-on-dtu?p=mvsformer-revealing-the-devil-in-transformer)
