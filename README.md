@@ -10,9 +10,9 @@ Flags in the 'upstream + flags' row (no source change): cudnn.benchmark, TF32 (b
 |---|---|---|---|---|---|---|---|
 | upstream (bf16 autocast) | 495.6 | 108.3 | 1.00x | 1.00x | 2880 / 3270 | 3.7 s / 1240 ms / 127 ms | not measured (random weights) |
 | upstream + flags (cudnn.benchmark, TF32; bf16 autocast kept) | 463.6 | 100.9 | 1.00x / 1.07x | 1.00x / 1.07x | 9320 / 9760 | first call 6.5 s / new size 1678 ms | not measured (random weights) |
-| **cuda-kernels** | 273.7 | 59.2 | 1.69x / 1.81x | 1.70x / 1.83x | 2540 / 4060 | first call 821 ms / new size 67 ms | not measured (random weights) |
+| **cuda-kernels** | 273.7 | 59.1 | 1.69x / 1.81x | 1.70x / 1.83x | 2540 / 4060 | first call 859 ms / new size 68 ms | not measured (random weights) |
 
-The pretrained MVSFormer++ checkpoint was not available; weights are DINOv2-B pretrained plus seeded random init, so speed is valid but ACCURACY WAS NOT MEASURED. Known issue: the kernel path crashed (illegal memory access, entropy/visibility stage) on one ETH3D scene (pipes, ref 12) with random weights; it reproduces on the research branch and was not root-caused. fp16 autocast flags variant: 445.1 / 97.7 ms (unverifiable).
+The pretrained MVSFormer++ checkpoint was not available; weights are DINOv2-B pretrained plus seeded random init, so speed is valid but ACCURACY WAS NOT MEASURED. An out-of-bounds read in the fused cost-volume kernels for projections far outside the image (seen as a crash on ETH3D pipes ref 12) is fixed; all 13 ETH3D refs now run, with depth within 0.08% (median) of upstream. fp16 autocast flags variant: 445.1 / 97.7 ms (unverifiable).
 
 ---
 
