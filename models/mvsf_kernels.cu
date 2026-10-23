@@ -38,7 +38,10 @@ __device__ __forceinline__ void corr(const T* __restrict__ src, const float* ref
                                      float* out) {
 #pragma unroll
     for (int g = 0; g < G; g++) out[g] = 0.f;
-    if (!(isfinite(ix) && isfinite(iy))) return;
+    // All four bilinear corners lie outside the image unless -1 < ix < W and -1 < iy < H (zero padding), so such
+    // samples contribute nothing. Rejecting them here (also NaN / inf) keeps the float -> int conversion below in
+    // range: an out-of-range (int)floorf() is undefined and produced out-of-bounds addresses for far-off projections.
+    if (!(ix > -1.f && ix < (float)W && iy > -1.f && iy < (float)H)) return;
     float fx = floorf(ix), fy = floorf(iy);
     int x0 = (int)fx, y0 = (int)fy;
     float ax = ix - fx, ay = iy - fy;
