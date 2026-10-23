@@ -1,11 +1,11 @@
-"""Fast MVSFormer++ inference (exp 011, workstream A).
+"""Fast MVSFormer++ inference.
 
 Same weights / state_dict as DINOv2MVSNet (subclass), same eval path (bf16 autocast, fp32 cost volumes).
   friendly: plain PyTorch only (ONNX-exportable ops): BN folded, all views batched through encoder / decoder / FMT /
             CrossVIT decoder, channels-last convs, no checkpoint wrappers, bf16 FPN upsampling, per-source cost volume
             with fused-friendly op order.
   max:      friendly + fused CUDA cost-volume kernels (warp + group correlation + softmax entropy, then weighted
-            aggregation, fp32 math, no [C,D,H,W] intermediates) + fastbb DINOv2 blocks + small-channel encoder conv
+            aggregation, fp32 math, no [C,D,H,W] intermediates) + vendored fastbb DINOv2 blocks + small-channel encoder conv
             kernel + fused last FPN level (exact linear rewrite) + head-dim-16 flash attention (stage-1 cost transformer).
 Batch size 1 (the timed unit is one reference view + its sources).
 """
@@ -79,8 +79,8 @@ class FastMVSFormerPP(DINOv2MVSNet):
             self.ext = mvsf_ext.load()
             self._prep_fpn_max()
             if "novit" not in self.mode:  # fp16 DINOv2 blocks, flash64 attention, fp16-accumulate GEMMs
-                import fastbb
-                self.n_fastbb = fastbb.install_vit_blocks(self.vit, "hh-g1" if "hh" in self.mode else "fh-g1")
+                from models.fastbb_vendored.vit import install_vit_blocks
+                self.n_fastbb = install_vit_blocks(self.vit, "hh-g1" if "hh" in self.mode else "fh-g1")
             self.n_flash16 = self._install_flash16()
         return self
 
